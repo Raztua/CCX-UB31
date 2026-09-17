@@ -1,12 +1,12 @@
-# CalculiX CCX 2.23 — UB21 Beam Element & User Sections Extension
+# CalculiX CCX 2.23 — UB31 Beam Element & User Sections Extension
 
 [![CalculiX](https://img.shields.io/badge/CalculiX-CCX%202.23-blue.svg)](http://www.calculix.de/)
-[![Element](https://img.shields.io/badge/Element-UB21-green.svg)]()
+[![Element](https://img.shields.io/badge/Element-UB31-green.svg)]()
 [![Kinematics](https://img.shields.io/badge/Formulation-Timoshenko%20%2F%20Euler--Bernoulli-orange.svg)]()
 [![Validation](https://img.shields.io/badge/Validation-100%25%20Verified-brightgreen.svg)]()
 [![License](https://img.shields.io/badge/License-GPL%20v2-lightgrey.svg)](CalculiX/ccx_2.23/src/gpl.htm)
 
-A native extension and patch for **CalculiX CCX 2.23** adding the **UB21 (2-node 3D Timoshenko / Euler-Bernoulli user beam element)** and **User Beam Sections** system.
+A native extension and patch for **CalculiX CCX 2.23** adding the **UB31 (2-node 3D Timoshenko / Euler-Bernoulli user beam element)** and **User Beam Sections** system.
 
 This implementation provides high-accuracy 3D beam modeling with complete rotational coupling, 8 cross-section shapes, member end releases (hinges), 3D geometric nodal offsets, rich distributed load distributions, mass formulation choices, and enhanced post-processing in **CalculiX GraphiX (CGX)**.
 
@@ -29,6 +29,8 @@ This implementation provides high-accuracy 3D beam modeling with complete rotati
   - [6. Distributed Loading Library (`*DLOAD`)](#6-distributed-loading-library-dload)
   - [7. Dynamic Multi-Station Beam CSV Output (`*USER BEAM OUTPUT`)](#7-dynamic-multi-station-beam-csv-output-user-beam-output)
   - [8. `UCONN6` Connectors & ASCE 41-17 Plastic Hinge Output (`*USER CONNECTOR OUTPUT`)](#8-uconn6-connectors--asce-41-17-plastic-hinge-output-user-connector-output)
+  - [9. Native Step-Level Load Combinations (`*USER LOAD COMBINATION`)](#9-native-step-level-load-combinations-user-load-combination)
+  - [10. Structural Steel Beam Code Checking (`*USER BEAM CHECK`)](#10-structural-steel-beam-code-checking-user-beam-check)
 - [Analysis Capabilities](#-analysis-capabilities)
 - [Post-Processing & CGX Visualization](#-post-processing--cgx-visualization)
 - [Validation & Verification](#-validation--verification)
@@ -39,7 +41,7 @@ This implementation provides high-accuracy 3D beam modeling with complete rotati
 
 ## 🚀 Key Features
 
-- **Element Formulation**: 2-node 3D beam element (`UB21`) with 6 DOFs per node (`UX`, `UY`, `UZ`, `ROTX`, `ROTY`, `ROTZ`).
+- **Element Formulation**: 2-node 3D beam element (`UB31`) with 6 DOFs per node (`UX`, `UY`, `UZ`, `ROTX`, `ROTY`, `ROTZ`).
 - **Timoshenko Shear & Limiting Euler-Bernoulli Kinematics**: Exact shear coefficients computed automatically based on cross-section geometry and Poisson's ratio $\nu$.
 - **8 Cross-Section Profiles**: `RECT`, `CIRC`, `PIPE`, `I`, `T`, `CHAN` (U-channel), `L` (Angle), and `BOX` (Hollow Box).
 - **Asymmetric Section Handling**: Automatic determination of principal inertia axes ($I_{yy}$, $I_{zz}$) and principal rotation angle $\theta_p$ for `L` and `CHAN` sections to eliminate spurious bending-shear coupling.
@@ -48,8 +50,8 @@ This implementation provides high-accuracy 3D beam modeling with complete rotati
 - **Comprehensive Distributed Loading**: Uniform, triangular, trapezoidal, and partial patch transverse loads (`PX`, `P1`, `P2`, `P1_T1`, `P1_T2`, `P2_T1`, `P2_T2`, `P1_P_aa_bb`, `P2_P_aa_bb`), plus `CENTRIF` and `GRAV`.
 - **Dynamic Mass Options**: Consistent mass matrix and optional lumped mass formulation (controlled by explicit dynamics or `CCX_LUMPED_MASS=1`).
 - **Advanced Post-Processing**:
-  - Automatically expands each UB21 element into 10 line sub-elements in the `.frd` file for smooth continuous stress and internal force contour visualization in CGX.
-  - Generates 11-station internal force/stress evaluations per step in `ub21_beam_forces.csv`.
+  - Automatically expands each UB31 element into 10 line sub-elements in the `.frd` file for smooth continuous stress and internal force contour visualization in CGX.
+  - Generates 11-station internal force/stress evaluations per step in `ub31_beam_forces.csv`.
 
 ---
 
@@ -60,12 +62,12 @@ CCX-CB/
 ├── CalculiX/                     # CalculiX CCX 2.23 source tree with SPOOLES & ARPACK
 │   └── ccx_2.23/src/             # CCX core routines and patched Fortran/C modules
 ├── cgx_2.23.all/                 # CalculiX GraphiX (CGX 2.23) source tree
-├── ub21_source_files/            # Pure Fortran modules for the UB21 patch
-├── ub21_ccx223.patch             # Unified diff patch for a clean CCX 2.23 tree
-├── install_ub21.sh               # Automated installer & compiler script
+├── ub31_source_files/            # Pure Fortran modules for the UB31 patch
+├── ub31_ccx223.patch             # Unified diff patch for a clean CCX 2.23 tree
+├── install_ub31.sh               # Automated installer & compiler script
 ├── run_tests.py                  # Unified master test runner CLI
-├── UB21_CCX223_Manual.md         # Comprehensive User Manual, Theory & Deck Reference
-├── CGX_UB21_Guide.md             # CGX Visualization & Post-Processing Guide
+├── UB31_CCX223_Manual.md         # Comprehensive User Manual, Theory & Deck Reference
+├── CGX_UB31_Guide.md             # CGX Visualization & Post-Processing Guide
 ├── README.md                     # Project README
 └── tests/                        # Organized verification, validation & benchmark suites
     ├── 01_static_linear/         # Linear static, member releases & semi-rigid springs
@@ -84,15 +86,15 @@ CCX-CB/
 
 ### Option 1: Automated 1-Command Installation (Recommended)
 
-1. Make `install_ub21.sh` executable:
+1. Make `install_ub31.sh` executable:
    ```bash
-   chmod +x install_ub21.sh
+   chmod +x install_ub31.sh
    ```
 2. Execute the script targeting your CCX source tree:
    ```bash
-   ./install_ub21.sh CalculiX/ccx_2.23/src
+   ./install_ub31.sh CalculiX/ccx_2.23/src
    ```
-   The script automatically detects directory depth, applies `ub21_ccx223.patch`, builds with `make -j$(nproc)`, and verifies the generated `ccx_2.23` binary.
+   The script automatically detects directory depth, applies `ub31_ccx223.patch`, builds with `make -j$(nproc)`, and verifies the generated `ccx_2.23` binary.
 
 ---
 
@@ -102,7 +104,7 @@ From the root of a clean CalculiX 2.23 source tree:
 
 ```bash
 # 1. Apply the patch
-patch -p1 < ub21_ccx223.patch
+patch -p1 < ub31_ccx223.patch
 
 # 2. Compile CCX binary
 cd CalculiX/ccx_2.23/src
@@ -116,11 +118,11 @@ make -j$(nproc)
 - **WSL (Ubuntu / Debian - Recommended)**:
   ```bash
   sudo apt update && sudo apt install build-essential patch gfortran liblapack-dev libspooles-dev
-  ./install_ub21.sh /mnt/c/path/to/ccx_2.23/src
+  ./install_ub31.sh /mnt/c/path/to/ccx_2.23/src
   ```
 - **Git Bash (Windows Native)**:
   ```bash
-  patch -p1 < ub21_ccx223.patch
+  patch -p1 < ub31_ccx223.patch
   ```
 - **MSYS2 / MinGW-w64**:
   ```bash
@@ -136,8 +138,8 @@ Create a file `cantilever.inp`:
 
 ```inp
 *HEADING
-UB21 Cantilever Beam - Static Point & Uniform Load
-*USER ELEMENT, TYPE=UB21, NODES=2, MAXDOF=6, INTEGRATIONPOINTS=1
+UB31 Cantilever Beam - Static Point & Uniform Load
+*USER ELEMENT, TYPE=UB31, NODES=2, MAXDOF=6, INTEGRATIONPOINTS=1
 *NODE, NSET=NALL
 1,  0.0, 0.0, 0.0
 2,  1.0, 0.0, 0.0
@@ -145,7 +147,7 @@ UB21 Cantilever Beam - Static Point & Uniform Load
 4,  3.0, 0.0, 0.0
 5,  4.0, 0.0, 0.0
 6,  5.0, 0.0, 0.0
-*ELEMENT, TYPE=UB21, ELSET=EBEAM
+*ELEMENT, TYPE=UB31, ELSET=EBEAM
 1, 1, 2
 2, 2, 3
 3, 3, 4
@@ -158,7 +160,6 @@ UB21 Cantilever Beam - Static Point & Uniform Load
 7850.0
 *USER BEAM SECTION, ELSET=EBEAM, MATERIAL=STEEL, SECTION=RECT
 0.1, 0.2
-0.0, 1.0, 0.0
 *BOUNDARY
 1, 1, 6
 *STEP
@@ -184,9 +185,22 @@ ccx_2.23 cantilever
 ## 📖 Input Syntax & Usage
 
 ### 1. User Element Declaration (`*USER ELEMENT`)
-Before defining any UB21 elements, declare the user element type:
+Before defining any UB31 elements, declare the user element type:
 ```inp
-*USER ELEMENT, TYPE=UB21, NODES=2, MAXDOF=6, INTEGRATIONPOINTS=1
+*USER ELEMENT, TYPE=UB31, NODES=2, MAXDOF=6, INTEGRATIONPOINTS=1
+```
+
+#### Example Usage in Model Deck:
+```inp
+*NODE, NSET=NALL
+1,   0.0, 0.0, 0.0
+2,   3.0, 0.0, 0.0
+3,   6.0, 0.0, 0.0
+
+*USER ELEMENT, TYPE=UB31, NODES=2, MAXDOF=6, INTEGRATIONPOINTS=1
+*ELEMENT, TYPE=UB31, ELSET=EBEAM
+1, 1, 2
+2, 2, 3
 ```
 
 ---
@@ -195,13 +209,42 @@ Before defining any UB21 elements, declare the user element type:
 High-level keyword for assigning geometry, orientation, releases, and offsets:
 
 ```inp
-*USER BEAM SECTION, ELSET=<elset>, MATERIAL=<mat>, SECTION=<shape> [, ORIENTATION=<ori>] [, ROTATION=<deg>] [, RELEASE1=<code>] [, RELEASE2=<code>] [, OFFSET1=(x,y,z)] [, OFFSET2=(x,y,z)]
+*USER BEAM SECTION, ELSET=<elset>, MATERIAL=<mat>, SECTION=<shape> [, ROTATION=<deg>] [, RELEASE1=<code>] [, RELEASE2=<code>] [, OFFSET1=(x,y,z)] [, OFFSET2=(x,y,z)]
 <dim_1>, <dim_2>, <dim_3>, <dim_4>, <dim_5>, <dim_6>
-<e2_x>, <e2_y>, <e2_z>
+[<e2_x>, <e2_y>, <e2_z>]
 ```
-- **Data Line 1**: Cross-section dimensions (`dims(1..6)`).
-- **Data Line 2**: Local orientation normal vector $\mathbf{e}_2$ (local transverse $y$-direction, e.g. `0.0, 1.0, 0.0`).
+- **Data Line 1 (Required)**: Cross-section dimensions (`dims(1..6)`).
+- **Data Line 2 (Optional)**: Local transverse orientation vector $\mathbf{e}_2$. If omitted, CCX-UB31 automatically calculates the upright normal orientation vector perpendicular to the beam axis.
 - **Nodal Offsets**: Configured on the keyword line via `OFFSET=`, `OFFSET1=`, `OFFSET2=`.
+
+#### Example A: Standard Rectangular Beam (Automatic Orientation)
+```inp
+*MATERIAL, NAME=STEEL
+*ELASTIC
+210.0E9, 0.30
+
+*USER BEAM SECTION, ELSET=EBEAM, MATERIAL=STEEL, SECTION=RECT
+0.15, 0.30
+```
+
+#### Example B: I-Beam Girder with Member End Releases (Automatic Orientation)
+```inp
+*USER BEAM SECTION, ELSET=EGIRDER, MATERIAL=STEEL, SECTION=I, RELEASE1=M1-M2, RELEASE2=M1-M2
+0.300, 0.150, 0.0107, 0.150, 0.0107, 0.0071
+```
+
+#### Example C: Custom Non-Standard Orientation Vector (When Specific Orientation is Required)
+```inp
+*USER BEAM SECTION, ELSET=EGIRDER, MATERIAL=STEEL, SECTION=I, ROTATION=45.0
+0.300, 0.150, 0.0107, 0.150, 0.0107, 0.0071
+0.0, 0.0, 1.0
+```
+
+#### Example D: Hollow Box Section with 3D Geometric Nodal Offsets
+```inp
+*USER BEAM SECTION, ELSET=EBOX, MATERIAL=STEEL, SECTION=BOX, OFFSET1=(0.0, 0.10, 0.0), OFFSET2=(0.0, 0.10, 0.0)
+0.20, 0.10, 0.008, 0.008, 0.008, 0.008
+```
 
 ---
 
@@ -213,12 +256,25 @@ Generic CalculiX property array format where all 19 constant slots are passed ac
 1, 0.1, 0.2, 0.0, 0.0, 0.0, 0.0, 0.0,
 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
 0, 0,
-0.0, 1.0, 0.0
+0.0, 0.0, 0.0
 ```
 - **Line 1 (Slots 1..8)**: `sect_type, dim1..dim6, rot_angle`
 - **Line 2 (Slots 9..14)**: `off_x1, off_y1, off_z1, off_x2, off_y2, off_z2`
-- **Line 3 (Slots 15..16)**: `rel_1, rel_2` (Bitmask integers)
-- **Line 4 (Slots 17..19)**: `e2_x, e2_y, e2_z` (Orientation normal vector)
+- **Line 3 (Slots 15..16)**: `rel_1, rel_2` (Bitmask integers: `48` = M1-M2, `56` = ALLM)
+- **Line 4 (Slots 17..19)**: `e2_x, e2_y, e2_z` (Optional orientation vector; `0.0, 0.0, 0.0` uses auto-orientation)
+
+#### Annotated Raw Vector Example:
+```inp
+*USER SECTION, ELSET=ECOLUMNS, MATERIAL=STEEL, CONSTANTS=19
+** Line 1: Type (4=I-section), h=0.30, b_top=0.15, t_f1=0.0107, b_bot=0.15, t_f2=0.0107, t_w=0.0071, rot=0.0
+4, 0.30, 0.15, 0.0107, 0.15, 0.0107, 0.0071, 0.0,
+** Line 2: Nodal offsets (off_x1, off_y1, off_z1, off_x2, off_y2, off_z2)
+0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+** Line 3: Releases at Node 1 and Node 2 (0 = Fully Fixed, 48 = Spherical Moment Release)
+0, 48,
+** Line 4: Transverse orientation vector e2 (0.0, 0.0, 0.0 = auto-orientation)
+0.0, 0.0, 0.0
+```
 
 ---
 
@@ -235,6 +291,42 @@ Generic CalculiX property array format where all 19 constant slots are passed ac
 | **`L`** (Angle) | `b, h, t` | Horizontal leg width $b$, Vertical leg height $h$, Thickness $t$ |
 | **`BOX`** (Hollow Box) | `h, b, t_bot, t_left, t_top, t_right` | Total height $h$, Width $b$, Flange and web thicknesses (or `h, b, t, t, t, t`) |
 
+#### Complete Input Examples for All 8 Cross-Section Shapes (Automatic Orientation):
+
+```inp
+** 1. Solid Rectangular: b = 0.15 m (width), h = 0.30 m (height)
+*USER BEAM SECTION, ELSET=E_RECT, MATERIAL=STEEL, SECTION=RECT
+0.15, 0.30
+
+** 2. Solid Circular: r_o = 0.05 m (outer radius)
+*USER BEAM SECTION, ELSET=E_CIRC, MATERIAL=STEEL, SECTION=CIRC
+0.05
+
+** 3. Hollow Pipe: r_o = 0.10 m (outer radius), t = 0.008 m (wall thickness)
+*USER BEAM SECTION, ELSET=E_PIPE, MATERIAL=STEEL, SECTION=PIPE
+0.10, 0.008
+
+** 4. I-Beam (HEA 300): h=0.290, b_top=0.300, t_f1=0.014, b_bot=0.300, t_f2=0.014, t_w=0.0085
+*USER BEAM SECTION, ELSET=E_IBEAM, MATERIAL=STEEL, SECTION=I
+0.290, 0.300, 0.014, 0.300, 0.014, 0.0085
+
+** 5. Tee Profile: h=0.150 m, b=0.100 m, t_f=0.010 m, t_w=0.006 m
+*USER BEAM SECTION, ELSET=E_TEE, MATERIAL=STEEL, SECTION=T
+0.150, 0.100, 0.010, 0.006
+
+** 6. U-Channel (UPN 200): h=0.200 m, b=0.075 m, t_f=0.0115 m, t_w=0.0085 m
+*USER BEAM SECTION, ELSET=E_CHAN, MATERIAL=STEEL, SECTION=CHAN
+0.200, 0.075, 0.0115, 0.0085
+
+** 7. Equal / Unequal Angle: b=0.100 m (leg 1), h=0.100 m (leg 2), t=0.010 m (thickness)
+*USER BEAM SECTION, ELSET=E_ANGLE, MATERIAL=STEEL, SECTION=L
+0.100, 0.100, 0.010
+
+** 8. Rectangular Hollow Box (RHS): h=0.200, b=0.100, t_bot=0.008, t_left=0.008, t_top=0.008, t_right=0.008
+*USER BEAM SECTION, ELSET=E_BOX, MATERIAL=STEEL, SECTION=BOX
+0.200, 0.100, 0.008, 0.008, 0.008, 0.008
+```
+
 ---
 
 ### 5. Member End Releases (Hinges)
@@ -249,6 +341,24 @@ Hinges can be defined using mnemonic string shortcuts or bitwise integers:
 | **`M2`** | **Planar Bending Hinge about axis 2** ($z$) | Local $R_z$ | **`32`** |
 | **`T`** | **Torsional Pin** | Local $R_x$ | **`8`** |
 | *Custom Integer* | *Sum of bit weights ($u_x=1, u_y=2, u_z=4, r_x=8, r_y=16, r_z=32$)* | Custom | `1..63` |
+
+#### Example A: Pinned-Pinned Beam (Spherical Bending Hinges at Both Ends)
+```inp
+*USER BEAM SECTION, ELSET=EGIRDER, MATERIAL=STEEL, SECTION=I, RELEASE1=M1-M2, RELEASE2=M1-M2
+0.30, 0.15, 0.0107, 0.15, 0.0107, 0.0071
+```
+
+#### Example B: Propped Cantilever with Tip Moment Release (Fixed at Node 1, Pinned at Node 2)
+```inp
+*USER BEAM SECTION, ELSET=EPROPPED, MATERIAL=STEEL, SECTION=RECT, RELEASE2=M2
+0.10, 0.20
+```
+
+#### Example C: Space Truss Member (Ball Joints at Both Ends via Bitwise Masks)
+```inp
+*USER BEAM SECTION, ELSET=ETRUSS, MATERIAL=STEEL, SECTION=PIPE, RELEASE1=56, RELEASE2=56
+0.06, 0.005
+```
 
 ---
 
@@ -265,6 +375,43 @@ Hinges can be defined using mnemonic string shortcuts or bitwise integers:
 | **`P2_P_aa_bb`** | Partial patch load along local $z$ starting at `aa`% and ending at `bb`% of length. |
 | **`CENTRIF`** | Centrifugal load field with rotational velocity $\omega$ and axis. |
 | **`GRAV`** | Gravity/body accelerational force computed from material density $\rho$ and area $A$. |
+
+#### Complete Distributed Loading Step Examples:
+
+```inp
+*STEP
+*STATIC
+
+*DLOAD
+** 1. Uniform line load along local y (P1) and local z (P2)
+EBEAMS, P1, -5000.0
+EBEAMS, P2, -12000.0
+
+** 2. Linearly varying (triangular) loads:
+** P2_T1 ramps linearly from 0 at Node 1 to -8000 N/m at Node 2
+EGIRDER, P2_T1, -8000.0
+** P1_T2 starts at -6000 N/m at Node 1 and drops linearly to 0 at Node 2
+EWALL, P1_T2, -6000.0
+
+** 3. Partial patch loads:
+** P2_P_25_75 applies -15000 N/m strictly between 25% and 75% of member span
+ESPAN, P2_P_25_75, -15000.0
+
+** 4. Uniform axial traction per unit length along beam axis (PX)
+ECOLUMNS, PX, -2000.0
+
+** 5. Gravity / Self-Weight (computes rho * A * g automatically)
+EALL_BEAMS, GRAV, 9.81, 0.0, -1.0, 0.0
+
+** 6. Centrifugal Force (rotational speed rad/s and axis vector)
+EROTOR, CENTRIF, 314.159, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0
+
+*NODE FILE
+U, RF
+*EL FILE
+S
+*END STEP
+```
 
 ---
 
@@ -291,6 +438,29 @@ F, U, S
 - **`Q`**: Applied line load values (`Qx_Load, Qy_Load, Qz_Load`).
 - **`ALL`**: All 26 standard columns.
 
+#### Example A: Standard 10-Station Internal Results for Design
+```inp
+*STEP
+*STATIC
+*DLOAD
+EBEAM, P2, -15000.0
+*USER BEAM OUTPUT, FILE=beam_internal_forces.csv, ELSET=EBEAM, SUBDIVISIONS=10, INCREMENT=LAST
+F, U, S
+*END STEP
+```
+
+#### Example B: Multi-Set Multi-File Output for Girders and Columns
+```inp
+*USER BEAM OUTPUT, FILE=(girders_out.csv, columns_out.csv), ELSET=(EGIRDERS, ECOLUMNS), SUBDIVISIONS=5
+F, S
+```
+
+#### Example C: Global Coordinate Transformation Across All Dynamic Increments
+```inp
+*USER BEAM OUTPUT, FILE=frame_history.csv, ELSET=EALL, COORDINATES=GLOBAL, INCREMENT=ALL
+ALL
+```
+
 #### Generated CSV Format:
 ```csv
 Step,Increment,Time,Element,Station_Pct,X_local,Fx_Axial,Vy_Shear,Vz_Shear,Mx_Torsion,My_Bending,Mz_Bending,Ux,Uy,Uz,Rot_X,Rot_Y,Rot_Z,...
@@ -303,25 +473,44 @@ Step,Increment,Time,Element,Station_Pct,X_local,Fx_Axial,Vy_Shear,Vz_Shear,Mx_To
 6-DOF zero-length connector element (`UCONN6`) for discrete joint springs, member end releases, and nonlinear ASCE 41-17 plastic hinges:
 
 #### A. Connector Definition (`*USER CONNECTOR`)
+
+##### Example 1: Linear Elastic Rotational Spring (Semi-Rigid Joint)
+Connect two coincident nodes with a rotational stiffness of $K_{\theta y} = 5.0 \times 10^6 \text{ N}\cdot\text{m/rad}$:
 ```inp
+*NODE, NSET=NCONN
+10,   4.0, 0.0, 0.0
+101,  4.0, 0.0, 0.0
+
 *USER ELEMENT, TYPE=UCONN6, NODES=2, MAXDOF=6, INTEGRATIONPOINTS=1
+*ELEMENT, TYPE=UCONN6, ELSET=ESEMIRIGID
+50, 10, 101
+
+*USER CONNECTOR, ELSET=ESEMIRIGID
+1.0E12, 1.0E12, 1.0E12, 1.0E12, 5.0E6, 1.0E12
+```
+
+##### Example 2: Nonlinear ASCE 41-17 Plastic Hinge Backbone
+Define an inelastic flexural plastic hinge on degree-of-freedom 5 ($R_y$ bending) with yield moment $M_y = 250 \text{ kN}\cdot\text{m}$, rotation limits, and post-yield strain hardening:
+```inp
 *ELEMENT, TYPE=UCONN6, ELSET=EHINGE
-10, 1, 101
+51, 10, 101
 
-** Linear 6-DOF elastic spring:
-*USER CONNECTOR, ELSET=EHINGE
-K_ux, K_uy, K_uz, K_rx, K_ry, K_rz
-
-** Nonlinear ASCE 41-17 plastic hinge:
 *USER CONNECTOR, ELSET=EHINGE, NONLINEAR=ASCE41
-K_ux, K_uy, K_uz, K_rx, 0.0, K_rz
-My, theta_y, theta_cap, c_res, theta_u, theta_fail, alpha_hard, dof_idx
+** Line 1: Elastic uncoupled stiffness for all 6 DOFs (DOF 5 is overridden by backbone)
+1.0E12, 1.0E12, 1.0E12, 1.0E12, 0.0, 1.0E12
+** Line 2: My, theta_y, theta_cap, c_res, theta_u, theta_fail, alpha_hard, dof_idx
+250.0E3, 0.005, 0.025, 0.20, 0.040, 0.050, 0.03, 5
 ```
 
 #### B. Connector Output Card (`*USER CONNECTOR OUTPUT`)
 ```inp
-*USER CONNECTOR OUTPUT, FILE=hinges.csv, ELSET=EHINGE
+*STEP, NLGEOM
+*STATIC
+*CLOAD
+101, 2, -50000.0
+*USER CONNECTOR OUTPUT, FILE=hinge_results.csv, ELSET=EHINGE, INCREMENT=ALL
 F, U, STATE
+*END STEP
 ```
 - **`F`**: Connector forces & moments (`Fx, Fy, Fz, Mx, My, Mz`).
 - **`U`**: Relative joint deformations (`dUx, dUy, dUz, dRotX, dRotY, dRotZ`).
@@ -335,13 +524,188 @@ Step,Increment,Time,Element,Node1,Node2,Fx,Fy,Fz,Mx,My,Mz,dUx,dUy,dUz,dRotX,dRot
 
 ---
 
+### 9. Native Step-Level Load Combinations (`*USER LOAD COMBINATION`)
+
+Allows structural engineers to define basic primary load cases in early steps, and synthesize factored load combinations into separate analysis steps directly inside the CalculiX deck without external pre-/post-processing scripts.
+
+#### Complete Multi-Step Working Example:
+```inp
+*HEADING
+Multi-Case Building Frame with Native Factored Combinations
+
+** --- Primary Load Cases ---
+*STEP
+*STATIC
+** Step 1: Self-Weight / Dead Load (G)
+*DLOAD
+EALL_BEAMS, GRAV, 9.81, 0.0, -1.0, 0.0
+*END STEP
+
+*STEP
+*STATIC
+** Step 2: Imposed Live Load (Q)
+*DLOAD
+EGIRDERS, P2, -15000.0
+*END STEP
+
+*STEP
+*STATIC
+** Step 3: Lateral Wind Load (W)
+*CLOAD
+10, 1, 45000.0
+20, 1, 45000.0
+*END STEP
+
+** --- Factored Design Combinations ---
+*STEP
+*STATIC
+** Step 4: ULS Fundamental Combination (1.35*G + 1.50*Q + 0.90*W)
+*USER LOAD COMBINATION
+ULS_STR, 1, 1.35, 2, 1.50, 3, 0.90
+*NODE FILE
+U, RF
+*EL FILE
+S
+*USER BEAM OUTPUT, FILE=forces_uls.csv, ELSET=EGIRDERS, SUBDIVISIONS=10
+F, S
+*END STEP
+
+*STEP, NLGEOM
+*STATIC
+** Step 5: SLS Characteristic Combination (1.00*G + 1.00*Q) with Second-Order P-Delta
+*USER LOAD COMBINATION
+SLS_CHAR, 1, 1.00, 2, 1.00
+*NODE FILE
+U
+*USER BEAM OUTPUT, FILE=forces_sls.csv, ELSET=EGIRDERS, SUBDIVISIONS=10
+F, U
+*END STEP
+```
+
+#### Supported Features:
+- **Load Types Synthesized**: Factored combination of nodal point loads & moments (`*CLOAD`), element distributed line loads (`*DLOAD`), and volumetric/gravity loads (`*DLOAD, GRAV`).
+- **Single or Multi-Line Continuation**: Define combinations on one line or split across multiple lines using an optional combination label (`ULS_STR`, `SLS_CHAR`, etc.).
+- **True Nonlinear Solver Integration**: Factored loads are applied upfront before matrix assembly, fully compatible with `*STEP, NLGEOM` for second-order $P$-$\Delta$ equilibrium and stability calculations.
+- **Native Post-Processing**: Displacements, reactions, stresses, and beam internal forces are written to native `.frd` datasets and CSV outputs for every combination step.
+
+---
+
+### 10. Structural Steel Beam Code Checking (`*USER BEAM CHECK`)
+
+Native structural steel code-checking for **Eurocode 3 (EN 1993-1-1)** and **AISC 360-16 / 360-22 LRFD**, supporting cross-section classification, member flexural/torsional buckling, combined axial-bending stability equations, multi-station CSV tabular output, and 3D color contour mapping in CGX (`UCHK`).
+
+#### Complete Working Example Deck:
+```inp
+*HEADING
+Eurocode 3 & AISC 360 Automated Member Code Checking
+
+*USER ELEMENT, TYPE=UB31, NODES=2, MAXDOF=6, INTEGRATIONPOINTS=1
+*NODE
+1, 0.0, 0.0, 0.0
+2, 6.0, 0.0, 0.0
+*ELEMENT, TYPE=UB31, ELSET=EBEAM
+1, 1, 2
+
+*USER BEAM SECTION, ELSET=EBEAM, MATERIAL=STEEL, SECTION=I
+0.300, 0.150, 0.0107, 0.150, 0.0107, 0.0071
+
+*MATERIAL, NAME=STEEL
+*ELASTIC
+210.0E9, 0.30
+*BOUNDARY
+1, 1, 6
+2, 2, 3
+
+** --- Code Check Configuration ---
+** Global member parameters (Yield strength, Buckling lengths Lcr_y, Lcr_z, L_LT, Moment factor C1)
+*USER BEAM DESIGN, ELSET=EBEAM
+FY=355.0E6, LCR_Y=6.0, LCR_Z=3.0, L_LT=3.0, C1=1.13
+
+** Element-specific or set overrides:
+*USER BEAM DESIGN OVERRIDES
+** TARGET_ID,  LCR_Y,  LCR_Z,  L_LT,   C1,    FY
+   1,          6.0,    3.0,    3.0,    1.13,  355.0E6
+
+** Execute Eurocode 3 check card:
+*USER BEAM CHECK, CODE=EC3, FILE=codecheck_ec3.csv, SUBDIVISIONS=5, OUTPUT=ALL
+
+*STEP
+*STATIC
+*DLOAD
+EBEAM, P2, -25000.0
+*NODE FILE
+U, RF
+*EL FILE
+S
+*END STEP
+```
+
+#### Supported Standards & Checks:
+- **Eurocode 3 (EN 1993-1-1:2005)**: Cross-section Classes 1–3, tension $N_{t,Rd}$, compression $N_{c,Rd}$, shear $V_{c,Rd}$, bending $M_{c,Rd}$ with high-shear reduction $M_{y,V,Rd}$, column flexural buckling $\chi_y, \chi_z$, lateral-torsional buckling $\chi_{LT}$, and Annex B stability interaction equations (Eq. 6.61 & 6.62 with $k_{yy}, k_{yz}, k_{zy}, k_{zz}$).
+- **AISC 360-16 / 360-22 LRFD**: Chapter D (Tension), Chapter E (Column Buckling with $F_{cr}, \phi_c P_n$), Chapter F (Flexure & LTB with $M_p, L_p, L_r, \phi_b M_n$), Chapter G (Shear $\phi_v V_n$), and Chapter H combined interaction equations (Eq. H1-1a & H1-1b).
+- **Post-Processing**: Summary terminal table, 11-station longitudinal CSV output, and native `.frd` dataset `UCHK` (`UCTOT`, `UCAX`, `UCSH`, `UCBND`, `UCSTAB`, `UCLTB`) for 3D color contour plotting in CGX.
+
+---
+
 ## 🔬 Analysis Capabilities
 
-The UB21 and UCONN6 extensions support all standard CCX step procedures:
-- **`*STATIC`**: Linear static displacement, reaction, and stress analysis.
-- **`*FREQUENCY`**: Natural frequency extraction and mode shape calculation with consistent or lumped mass.
-- **`*BUCKLE`**: Linear critical eigenvalue buckling factor estimation using exact geometric stiffness matrices.
-- **`*DYNAMIC` / `*MODAL DYNAMIC`**: Direct integration or modal time-history dynamic simulations.
+The UB31 and UCONN6 extensions support all standard CCX step procedures:
+
+### 1. Linear Static Analysis (`*STATIC`)
+```inp
+*STEP
+*STATIC
+*DLOAD
+EBEAM, P2, -10000.0
+*NODE FILE
+U, RF
+*EL FILE
+S
+*END STEP
+```
+
+### 2. Natural Frequency & Modal Analysis (`*FREQUENCY`)
+Extracts the first 10 natural frequencies and 3D mode shapes:
+```inp
+*STEP
+*FREQUENCY
+10
+*NODE FILE
+U
+*EL FILE
+S
+*END STEP
+```
+
+### 3. Linear Critical Eigenvalue Buckling (`*BUCKLE`)
+Computes critical buckling factors and mode shapes using the exact UB31 geometric stiffness matrix:
+```inp
+*STEP
+*BUCKLE
+5
+*CLOAD
+2, 1, -1.0
+*NODE FILE
+U
+*EL FILE
+S
+*END STEP
+```
+
+### 4. Direct Integration Dynamic Analysis (`*DYNAMIC` / `*MODAL DYNAMIC`)
+Time-history dynamic response under transient time-varying loadings:
+```inp
+*STEP
+*DYNAMIC, DIRECT
+1.0E-4, 0.10
+*DLOAD
+EBEAM, P2, -5000.0
+*NODE FILE, FREQUENCY=10
+U
+*USER BEAM OUTPUT, FILE=dynamic_history.csv, ELSET=EBEAM, INCREMENT=ALL
+F, U
+*END STEP
+```
 
 ---
 
@@ -373,7 +737,7 @@ ds 2 e 3                 # SZZ (Bending Moment Mz)
 plot f                   # Render contours
 ```
 
-For complete step-by-step CGX batch scripting and dataset queries, see [`CGX_UB21_Guide.md`](CGX_UB21_Guide.md).
+For complete step-by-step CGX batch scripting and dataset queries, see [`CGX_UB31_Guide.md`](CGX_UB31_Guide.md).
 
 ---
 
@@ -417,8 +781,8 @@ Detailed benchmarks, pass/fail status breakdowns, and comparison tables are avai
 
 ## 📚 Documentation Reference
 
-- **[`UB21_CCX223_Manual.md`](UB21_CCX223_Manual.md)**: Full technical reference manual, mathematical derivations, cross-section formulations, and verified example decks.
-- **[`CGX_UB21_Guide.md`](CGX_UB21_Guide.md)**: Complete guide for post-processing and rendering UB21 results in CGX.
+- **[`UB31_CCX223_Manual.md`](UB31_CCX223_Manual.md)**: Full technical reference manual, mathematical derivations, cross-section formulations, and verified example decks.
+- **[`CGX_UB31_Guide.md`](CGX_UB31_Guide.md)**: Complete guide for post-processing and rendering UB31 results in CGX.
 - **[`tests/README.md`](tests/README.md)**: Comprehensive test suite documentation, category organization, and execution guide.
 - **[`tests/reports/ANALYSIS_STATUS_SUMMARY.md`](tests/reports/ANALYSIS_STATUS_SUMMARY.md)**: Comprehensive status metrics (Pass / Review / Fail / NA) breakdown by analysis type.
 - **[`tests/reports/MASTER_RESULTS_SUMMARY.md`](tests/reports/MASTER_RESULTS_SUMMARY.md)**: Quantitative comparison tables vs Nastran 95, OpenSees, PyNite, LUSAS, and analytical theory.

@@ -1,0 +1,23 @@
+# Object & compiled files
+*.o
+*.a
+*.mod
+*.so
+*.dylib
+
+# CalculiX simulation output files
+*.frd
+*.dat
+*.sta
+*.cvg
+*.12d
+*.csv
+*.rout
+spooles.out
+
+# Editor / OS files
+*~
+*.swp
+.DS_Store
+__pycache__/
+*.pyc
