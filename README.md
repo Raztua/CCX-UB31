@@ -4,7 +4,7 @@
 [![Element](https://img.shields.io/badge/Element-UB31-green.svg)]()
 [![Kinematics](https://img.shields.io/badge/Formulation-Timoshenko%20%2F%20Euler--Bernoulli-orange.svg)]()
 [![Validation](https://img.shields.io/badge/Validation-100%25%20Verified-brightgreen.svg)]()
-[![License](https://img.shields.io/badge/License-GPL%20v2-lightgrey.svg)](CalculiX/ccx_2.23/src/gpl.htm)
+[![License](https://img.shields.io/badge/License-GPL%20v2-lightgrey.svg)](src/gpl.htm)
 
 A native extension and patch for **CalculiX CCX 2.23** adding the **UB31 (2-node 3D Timoshenko / Euler-Bernoulli user beam element)** and **User Beam Sections** system.
 
@@ -15,10 +15,10 @@ This implementation provides high-accuracy 3D beam modeling with complete rotati
 ## 📑 Table of Contents
 - [Key Features](#-key-features)
 - [Repository Structure](#-repository-structure)
-- [Installation Guide](#-installation-guide)
-  - [Automated 1-Command Installation](#option-1-automated-1-command-installation-recommended)
-  - [Manual Installation (Linux / macOS)](#option-2-manual-installation-linux--macos)
-  - [Windows Installation (WSL / Git Bash / MSYS2)](#option-3-windows-installation)
+- [Installation & Compilation](#-installation--compilation)
+  - [Option 1: Using Precompiled Binaries (Linux / Windows)](#option-1-using-precompiled-binaries-linux--windows)
+  - [Option 2: Compiling from Source (Linux / macOS)](#option-2-compiling-from-source-linux--macos)
+  - [Option 3: Compiling on Windows (WSL / MSYS2 / MinGW)](#option-3-compiling-on-windows-wsl--msys2--mingw)
 - [Quickstart Example Deck](#-quickstart-example-deck)
 - [Input Syntax & Usage](#-input-syntax--usage)
   - [1. User Element Declaration (`*USER ELEMENT`)](#1-user-element-declaration-user-element)
@@ -33,8 +33,7 @@ This implementation provides high-accuracy 3D beam modeling with complete rotati
   - [10. Structural Steel Beam Code Checking (`*USER BEAM CHECK`)](#10-structural-steel-beam-code-checking-user-beam-check)
 - [Analysis Capabilities](#-analysis-capabilities)
 - [Post-Processing & CGX Visualization](#-post-processing--cgx-visualization)
-- [Validation & Verification](#-validation--verification)
-- [Documentation Reference](#-documentation-reference)
+- [Validation Suite](#-validation-suite)
 - [License](#-license)
 
 ---
@@ -58,76 +57,108 @@ This implementation provides high-accuracy 3D beam modeling with complete rotati
 ## 📁 Repository Structure
 
 ```text
-CCX-CB/
-├── CalculiX/                     # CalculiX CCX 2.23 source tree with SPOOLES & ARPACK
-│   └── ccx_2.23/src/             # CCX core routines and patched Fortran/C modules
-├── cgx_2.23.all/                 # CalculiX GraphiX (CGX 2.23) source tree
-├── ub31_source_files/            # Pure Fortran modules for the UB31 patch
-├── ub31_ccx223.patch             # Unified diff patch for a clean CCX 2.23 tree
-├── install_ub31.sh               # Automated installer & compiler script
-├── run_tests.py                  # Unified master test runner CLI
-├── UB31_CCX223_Manual.md         # Comprehensive User Manual, Theory & Deck Reference
-├── CGX_UB31_Guide.md             # CGX Visualization & Post-Processing Guide
-├── README.md                     # Project README
-└── tests/                        # Organized verification, validation & benchmark suites
-    ├── 01_static_linear/         # Linear static, member releases & semi-rigid springs
-    ├── 02_modal_eigenfrequency/  # Free vibration modal & natural frequency benchmarks
-    ├── 03_geometric_nonlinear_pdelta/# Second-order P-Delta & geometric nonlinearity
-    ├── 04_pushover_and_plasticity/# Inelastic pushover (ASCE 41-17, MDPI CBF, PyNite)
-    ├── 05_full_verification_and_qa/# 10-Batch analytical verification & ground truth QA
-    ├── 06_demos/                 # Mixed-dimensional demo models
-    ├── reports/                  # Markdown verification reports
-    └── run_all_tests.py          # Master test harness
+CCX-UB31/
+├── Release/                      # Precompiled standalone binaries & quick-start examples
+│   ├── README.md                 # Release instructions & platform details
+│   ├── examples/                 # Quick-start sample input decks
+│   │   └── cantilever_ec3.inp
+│   ├── linux/                    # Linux x86_64 binary (ccx_2.23) & tar.gz archive
+│   └── windows/                  # Windows x64 binary (ccx_2.23.exe) & zip archive
+├── src/                          # Full CalculiX CCX 2.23 source tree with UB31 extension
+│   ├── Makefile                  # Standard single-threaded build Makefile
+│   ├── Makefile_MT               # Multithreaded build Makefile (OpenMP / pthread)
+│   ├── ccx_2.23.c                # CalculiX main program
+│   ├── ub31_module.f             # UB31 beam element formulation & stiffness routines
+│   ├── uconn6_module.f           # UCONN6 multi-DOF non-linear spring/connector module
+│   ├── uconn_plasticity.f        # ASCE 41-17 backbone curves & inelastic hinges
+│   ├── userbeamsections.f        # 8 cross-section geometric property calculators
+│   ├── userbeamreleases.f        # Static condensation of beam member end releases
+│   ├── userbeamoutputs.f         # Multi-station internal forces CSV writer
+│   ├── userloadcombinations.f    # Native step-level load combination evaluator
+│   ├── usercomb_module.f         # Load combination state manager & storage
+│   ├── usercodecheck.f           # Eurocode 3 & AISC 360-16 steel code check engine
+│   └── ...                       # Complete CalculiX C and Fortran source routines
+├── validation/                   # Comprehensive standalone verification decks (.inp)
+│   ├── 01_cantilever_static_rect.inp
+│   ├── 02_multisection_8profiles.inp
+│   ├── 03_member_releases_pinned_beam.inp
+│   ├── 04_geometric_offsets_box.inp
+│   ├── 05_distributed_loading_suite.inp
+│   ├── 06_uconn6_semirigid_spring.inp
+│   ├── 07_uconn6_asce41_pushover.inp
+│   ├── 08_step_load_combinations.inp
+│   ├── 09_eurocode3_aisc_codecheck.inp
+│   ├── 10_modal_eigenfrequency.inp
+│   ├── 11_eigenvalue_buckling.inp
+│   ├── 12_geometric_nonlinear_pdelta.inp
+│   ├── 13_portal_frame_2d.inp
+│   ├── 14_3d_space_frame_pipe.inp
+│   └── 15_building_5storey_frame.inp
+├── install.sh                    # Automated build script (identical to standard CalculiX)
+├── .gitignore                    # Ignore build objects and simulation outputs
+└── README.md                     # Comprehensive documentation & input syntax reference
 ```
 
 ---
 
-## 🛠 Installation Guide
+## 🛠 Installation & Compilation
 
-### Option 1: Automated 1-Command Installation (Recommended)
+> **Note**: Because the full CalculiX CCX 2.23 source tree is included in [`src/`](src/) with all UB31 enhancements, building is **identical to building standard CalculiX CCX 2.23**.
 
-1. Make `install_ub31.sh` executable:
-   ```bash
-   chmod +x install_ub31.sh
-   ```
-2. Execute the script targeting your CCX source tree:
-   ```bash
-   ./install_ub31.sh CalculiX/ccx_2.23/src
-   ```
-   The script automatically detects directory depth, applies `ub31_ccx223.patch`, builds with `make -j$(nproc)`, and verifies the generated `ccx_2.23` binary.
+### Option 1: Using the Automated Build Script
+
+Run [`install.sh`](install.sh) from the repository root:
+```bash
+./install.sh
+```
 
 ---
 
-### Option 2: Manual Installation (Linux / macOS)
+### Option 2: Compiling Directly from Source (Linux / macOS)
 
-From the root of a clean CalculiX 2.23 source tree:
+Prerequisites: `gcc`, `gfortran`, `make`, `liblapack-dev`, `libspooles-dev` (or local SPOOLES libraries).
 
 ```bash
-# 1. Apply the patch
-patch -p1 < ub31_ccx223.patch
+# 1. Navigate to the source tree
+cd src
 
-# 2. Compile CCX binary
-cd CalculiX/ccx_2.23/src
+# 2. Build with make (just like standard CalculiX)
 make -j$(nproc)
+
+# 3. Verify the generated executable
+./ccx_2.23 -v
 ```
 
 ---
 
-### Option 3: Windows Installation
+### Option 3: Using Precompiled Binaries (Linux / Windows)
+
+Precompiled, fully-featured standalone binaries with SPOOLES and ARPACK integrated are provided in the [`Release/`](Release/) directory:
+
+- **Linux (x86_64)**:
+  ```bash
+  # Run directly from Release/linux
+  ./Release/linux/ccx_2.23 job_name
+  ```
+- **Windows (x64)**:
+  ```powershell
+  # Run executable in PowerShell / CMD
+  .\Release\windows\ccx_2.23.exe job_name
+  ```
+
+---
+
+### Option 4: Compiling on Windows (WSL / MSYS2 / MinGW)
 
 - **WSL (Ubuntu / Debian - Recommended)**:
   ```bash
-  sudo apt update && sudo apt install build-essential patch gfortran liblapack-dev libspooles-dev
-  ./install_ub31.sh /mnt/c/path/to/ccx_2.23/src
-  ```
-- **Git Bash (Windows Native)**:
-  ```bash
-  patch -p1 < ub31_ccx223.patch
+  sudo apt update && sudo apt install build-essential gfortran liblapack-dev libspooles-dev
+  cd src && make -j$(nproc)
   ```
 - **MSYS2 / MinGW-w64**:
   ```bash
-  pacman -S patch make mingw-w64-x86_64-gfortran mingw-w64-x86_64-gcc
-  cd CalculiX/ccx_2.23/src && make -f Makefile
+  pacman -S make mingw-w64-x86_64-gfortran mingw-w64-x86_64-gcc
+  cd src && make -f Makefile
   ```
 
 ---
@@ -737,58 +768,39 @@ ds 2 e 3                 # SZZ (Bending Moment Mz)
 plot f                   # Render contours
 ```
 
-For complete step-by-step CGX batch scripting and dataset queries, see [`CGX_UB31_Guide.md`](CGX_UB31_Guide.md).
-
 ---
 
-## ✅ Validation & Verification
+## ✅ Validation Suite
 
-The patch includes 15 automated validation suites verifying the implementation against theoretical analytical solutions (Timoshenko & Euler-Bernoulli beam theory) and Nastran 95 baselines:
+The repository includes 15 standalone `.inp` verification decks in [`validation/`](validation/) covering all UB31 capabilities against exact theoretical/analytical structural mechanics solutions:
 
-### 1. Running the Verification Suites
+| Deck | Category | Key Validation Target | Theoretical Reference |
+| :--- | :--- | :--- | :--- |
+| [`01_cantilever_static_rect.inp`](validation/01_cantilever_static_rect.inp) | Linear Statics | Tip deflection & reactions with Timoshenko shear deformation | Closed-form Timoshenko & Euler-Bernoulli ($v = \frac{PL^3}{3EI} + \frac{PL}{GA_s}$) |
+| [`02_multisection_8profiles.inp`](validation/02_multisection_8profiles.inp) | Section Library | Cross-section geometry & principal axes for 8 shapes | Exact analytical $A, I_{yy}, I_{zz}, J, k_s, \theta_p$ |
+| [`03_member_releases_pinned_beam.inp`](validation/03_member_releases_pinned_beam.inp) | Member Releases | Static condensation of rotational DOFs (M1, M2, ALLM) | Zero end moment & exact simply-supported deflection |
+| [`04_geometric_offsets_box.inp`](validation/04_geometric_offsets_box.inp) | Offsets | 3D eccentric neutral axis shifts at beam ends | Rigid offset kinematics & transfer moments ($M = P \cdot e$) |
+| [`05_distributed_loading_suite.inp`](validation/05_distributed_loading_suite.inp) | Distributed Loads | Uniform, triangular, trapezoidal, & partial patch transverse loads | Propped cantilever & fixed-fixed continuous beam integrals |
+| [`06_uconn6_semirigid_spring.inp`](validation/06_uconn6_semirigid_spring.inp) | Connectors | 6-DOF uncoupled/coupled linear & non-linear elastic springs | Exact spring stiffness series/parallel compliance |
+| [`07_uconn6_asce41_pushover.inp`](validation/07_uconn6_asce41_pushover.inp) | Plasticity & Pushover | ASCE 41-17 backbone multi-linear plastic hinges | ASCE 41-17 Table 9-6 yield, peak, and residual capacities |
+| [`08_step_load_combinations.inp`](validation/08_step_load_combinations.inp) | Combinations | Native step linear combinations and envelope generation | Direct superposition $\sum c_k S_k$ & $\max/\min$ tracking |
+| [`09_eurocode3_aisc_codecheck.inp`](validation/09_eurocode3_aisc_codecheck.inp) | Code Checking | Steel beam capacity & interaction ratios (EC3 EN 1993-1-1 & AISC 360-16) | EN 1993-1-1 Cl. 6.2 cross-section resistance & Cl. 6.3 buckling |
+| [`10_modal_eigenfrequency.inp`](validation/10_modal_eigenfrequency.inp) | Dynamics | Natural frequencies & mode shapes with consistent mass | Analytical beam eigenfrequencies $\omega_n = (\beta_n L)^2 \sqrt{\frac{EI}{\rho A L^4}}$ |
+| [`11_eigenvalue_buckling.inp`](validation/11_eigenvalue_buckling.inp) | Stability | Elastic critical buckling loads & effective length factors | Euler buckling theory $P_{\text{cr}} = \frac{\pi^2 EI}{(KL)^2}$ |
+| [`12_geometric_nonlinear_pdelta.inp`](validation/12_geometric_nonlinear_pdelta.inp) | Geometric Nonlinear | Second-order geometric stiffness $K_g$ & P-Delta magnification | Analytical stability functions & P-Delta amplification $\frac{1}{1 - P/P_{\text{cr}}}$ |
+| [`13_portal_frame_2d.inp`](validation/13_portal_frame_2d.inp) | 2D Frame | Sway frame sidesway deflection & column bending moments | Slope-deflection equations & portal frame analytical solution |
+| [`14_3d_space_frame_pipe.inp`](validation/14_3d_space_frame_pipe.inp) | 3D Frame | Coupled 3D space frame with combined torsion & bi-axial bending | Exact 3D space frame matrix stiffness method |
+| [`15_building_5storey_frame.inp`](validation/15_building_5storey_frame.inp) | Full Structure | Multi-storey multi-bay 3D building frame with gravity & lateral loads | Multi-storey frame matrix structural analysis |
+
+To execute any validation deck:
 ```bash
-# Run fast smoke tests across all categories (15 test suites)
-python3 run_tests.py
-
-# Run full multi-section verification across all shapes (RECT, BOX, CIRC, PIPE, L, I, T)
-python3 run_tests.py --suite verif
-
-# Run unit tests and member end releases
-python3 run_tests.py --suite unit
-
-# Run nonlinear pushover and frame benchmarks
-python3 run_tests.py --suite pushover
-
-# Run all test suites
-python3 run_tests.py --all
+# From the validation directory:
+cd validation
+../src/ccx_2.23 01_cantilever_static_rect
 ```
-
-### 2. Validation Results Summary
-- **Static Deflection & Reactions**: **`0.000%` error** against exact Timoshenko closed-form solutions.
-- **Dynamic Station Displacements**: Exact match with Euler-Bernoulli particular sag ($v_{\text{mid}} = \frac{5 w L^4}{384 E I}$).
-- **Eigenfrequency Modal Analysis**: **`< 0.05%` error** against analytical beam natural frequencies.
-- **Eigenvalue Buckling Analysis**: Exact match on multi-span frames and column stability limits.
-- **15 / 15 Test Suites Passed (100% success)** across static, modal, P-Delta, ASCE 41-17 pushover, and QA verification suites.
-
-Detailed benchmarks, pass/fail status breakdowns, and comparison tables are available in:
-- **[`tests/reports/ANALYSIS_STATUS_SUMMARY.md`](tests/reports/ANALYSIS_STATUS_SUMMARY.md)**: Pass/Fail/Review/NA metrics and physical explanations across all analysis categories.
-- **[`tests/reports/MASTER_RESULTS_SUMMARY.md`](tests/reports/MASTER_RESULTS_SUMMARY.md)**: Master quantitative comparison table across all 7 physical quantities, 5 analysis types, and reference baselines.
-- **[`tests/reports/global_verification_report.md`](tests/reports/global_verification_report.md)**: Multi-section 10-batch analytical verification report across all 8 shapes.
-- **[`tests/reports/validation_report.md`](tests/reports/validation_report.md)**: Static, modal, transient dynamic, and Nastran 95 validation report.
-- **[`tests/reports/qa_quality_report.md`](tests/reports/qa_quality_report.md)**: QA robustness, equilibrium, energy conservation, and mechanism report.
-
----
-
-## 📚 Documentation Reference
-
-- **[`UB31_CCX223_Manual.md`](UB31_CCX223_Manual.md)**: Full technical reference manual, mathematical derivations, cross-section formulations, and verified example decks.
-- **[`CGX_UB31_Guide.md`](CGX_UB31_Guide.md)**: Complete guide for post-processing and rendering UB31 results in CGX.
-- **[`tests/README.md`](tests/README.md)**: Comprehensive test suite documentation, category organization, and execution guide.
-- **[`tests/reports/ANALYSIS_STATUS_SUMMARY.md`](tests/reports/ANALYSIS_STATUS_SUMMARY.md)**: Comprehensive status metrics (Pass / Review / Fail / NA) breakdown by analysis type.
-- **[`tests/reports/MASTER_RESULTS_SUMMARY.md`](tests/reports/MASTER_RESULTS_SUMMARY.md)**: Quantitative comparison tables vs Nastran 95, OpenSees, PyNite, LUSAS, and analytical theory.
 
 ---
 
 ## 📄 License
 
-CalculiX is distributed under the terms of the **GNU General Public License (GPL v2)**. See the `CalculiX/ccx_2.23/src/gpl.htm` file for license details.
+CalculiX is distributed under the terms of the **GNU General Public License (GPL v2)**. See the [`src/gpl.htm`](src/gpl.htm) file for license details.
