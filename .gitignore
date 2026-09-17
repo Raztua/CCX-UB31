@@ -15,9 +15,10 @@
 *.rout
 spooles.out
 
-# Editor / OS files
-*~
-*.swp
-.DS_Store
-__pycache__/
-*.pyc
+# Test & benchmark output directories
+*_results/
+eigen_modes_benchmark_results/
+pdelta_benchmark_results/
+pushover_plasticity_results/
+mixed_beam_demo_results/
+

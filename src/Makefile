@@ -1,5 +1,8 @@
 
-CFLAGS = -Wall -O2 -g -I ../../../SPOOLES.2.2 -DARCH="Linux" -DSPOOLES -DARPACK -DMATRIXSTORAGE -DNETWORKOUT
+SPOOLES_DIR = $(shell if [ -d "../../SPOOLES.2.2" ]; then echo "../../SPOOLES.2.2"; else echo "../../../SPOOLES.2.2"; fi)
+ARPACK_DIR = $(shell if [ -d "../../ARPACK" ]; then echo "../../ARPACK"; else echo "../../../ARPACK"; fi)
+
+CFLAGS = -Wall -O2 -g -I $(SPOOLES_DIR) -DARCH="Linux" -DSPOOLES -DARPACK -DMATRIXSTORAGE -DNETWORKOUT
 FFLAGS = -Wall -O2 -fopenmp -cpp
 
 CC=cc
@@ -18,11 +21,11 @@ OCCXF = $(SCCXF:.f=.o)
 OCCXC = $(SCCXC:.c=.o)
 OCCXMAIN = $(SCCXMAIN:.c=.o)
 
-DIR=../../../SPOOLES.2.2
+DIR=$(SPOOLES_DIR)
 
 LIBS = \
        $(DIR)/spooles.a \
-	../../../ARPACK/libarpack_INTEL.a \
+	$(ARPACK_DIR)/libarpack_INTEL.a \
        -lpthread -lm -lc
 
 ccx_2.23: $(OCCXMAIN) ccx_2.23.a  $(LIBS)
